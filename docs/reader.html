@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>斗破苍穹 - 在线阅读</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f0e8;
+      --bg-sidebar: #ece6d9;
+      --text: #2c2c2c;
+      --text-secondary: #666;
+      --accent: #8b4513;
+      --accent-light: rgba(139, 69, 19, 0.1);
+      --border: rgba(139, 69, 19, 0.15);
+      --shadow: rgba(0, 0, 0, 0.08);
+      --toolbar-bg: rgba(245, 240, 232, 0.95);
+      --chapter-hover: rgba(139, 69, 19, 0.06);
+      --font-body: 'Microsoft YaHei', sans-serif;
+      --font-size: 18px;
+    }
+
+    :root.dark {
+      --bg: #1a1a2e;
+      --bg-sidebar: #16213e;
+      --text: #c8c8d0;
+      --text-secondary: #8888a0;
+      --accent: #e2b340;
+      --accent-light: rgba(226, 179, 64, 0.1);
+      --border: rgba(226, 179, 64, 0.15);
+      --shadow: rgba(0, 0, 0, 0.3);
+      --toolbar-bg: rgba(26, 26, 46, 0.95);
+      --chapter-hover: rgba(226, 179, 64, 0.08);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.4s, color 0.4s;
+      overflow-x: hidden;
+    }
+
+    /* ===== 顶部工具栏 ===== */
+    .toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 100;
+      transition: background 0.4s, border-color 0.4s;
+    }
+
+    .toolbar-left { display: flex; align-items: center; gap: 12px; }
+    .toolbar-center { flex: 1; text-align: center; }
+    .toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+    .toolbar-title {
+      font-size: 15px;
+      color: var(--text-secondary);
+      transition: color 0.4s;
+    }
+
+    .toolbar-btn {
+      width: 38px; height: 38px;
+      border: none;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .toolbar-btn:hover { transform: scale(1.1); }
+    .toolbar-btn.active { background: var(--accent); color: #fff; }
+
+    .home-link {
+      text-decoration: none;
+      color: var(--accent);
+      font-size: 20px;
+      font-weight: bold;
+      margin-right: 8px;
+      transition: color 0.4s;
+    }
+
+    /* ===== 下拉菜单 ===== */
+    .dropdown { position: relative; }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 46px; right: 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      min-width: 160px;
+      box-shadow: 0 8px 30px var(--shadow);
+      z-index: 200;
+      transition: background 0.4s, border-color 0.4s;
+    }
+    .dropdown-menu.show { display: block; animation: fadeIn 0.2s; }
+    .dropdown-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      transition: background 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dropdown-item:hover { background: var(--chapter-hover); }
+    .dropdown-item.active { color: var(--accent); font-weight: bold; }
+    .dropdown-label {
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+
+    /* ===== 侧边栏（目录） ===== */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 150;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .sidebar-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 320px;
+      max-width: 85vw;
+      height: 100vh;
+      background: var(--bg-sidebar);
+      z-index: 200;
+      transform: translateX(-100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .sidebar-header h2 {
+      font-size: 18px;
+      color: var(--accent);
+    }
+    .sidebar-close {
+      width: 32px; height: 32px;
+      border: none; background: none;
+      color: var(--text-secondary);
+      font-size: 22px;
+      cursor: pointer;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sidebar-close:hover { background: var(--chapter-hover); }
+
+    /* 卷选择 */
+    .volume-tabs {
+      display: flex;
+      padding: 12px 16px;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+    .volume-tab {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      background: none;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .volume-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .volume-tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .sidebar-search {
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+    .sidebar-search input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, background 0.4s, color 0.4s;
+    }
+    .sidebar-search input:focus { border-color: var(--accent); }
+    .sidebar-search input::placeholder { color: var(--text-secondary); }
+
+    .chapter-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .chapter-list::-webkit-scrollbar { width: 4px; }
+    .chapter-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .chapter-item {
+      padding: 12px 14px;
+      cursor: pointer;
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text);
+      transition: background 0.2s, color 0.2s;
+      line-height: 1.4;
+    }
+    .chapter-item:hover { background: var(--chapter-hover); }
+    .chapter-item.active {
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .chapter-item .ch-num {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-right: 6px;
+    }
+
+    .sidebar-loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+    .sidebar-loading .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    /* ===== 阅读区域 ===== */
+    .reader-container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+      min-height: 100vh;
+    }
+
+    /* 首页欢迎 */
+    .welcome-screen {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .welcome-screen h1 {
+      font-size: 2.5rem;
+      color: var(--accent);
+      margin-bottom: 12px;
+      transition: color 0.4s;
+    }
+    .welcome-screen .author {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: 40px;
+    }
+    .welcome-screen .desc {
+      color: var(--text);
+      line-height: 2;
+      margin-bottom: 40px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .welcome-screen .start-btn {
+      display: inline-block;
+      padding: 14px 48px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .welcome-screen .start-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px var(--shadow);
+    }
+
+    /* 章节内容 */
+    .chapter-view { display: none; }
+    .chapter-view.active { display: block; }
+
+    .chapter-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--border);
+    }
+    .chapter-header h1 {
+      font-size: 1.6rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+      transition: color 0.4s;
+    }
+    .chapter-header .chapter-info {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .chapter-content {
+      font-size: var(--font-size);
+      line-height: 2;
+      color: var(--text);
+      transition: color 0.4s, font-size 0.2s;
+    }
+    .chapter-content p {
+      text-indent: 2em;
+      margin-bottom: 0.8em;
+    }
+
+    /* 章节导航 */
+    .chapter-nav {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border);
+    }
+    .nav-btn {
+      padding: 12px 32px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 25px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .nav-btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ===== 翻页动画 ===== */
+    /* 滑动 */
+    .anim-slide .chapter-view {
+      animation: slideIn 0.4s ease-out;
+    }
+    .anim-slide .chapter-view.slide-out-left {
+      animation: slideOutLeft 0.3s ease-in forwards;
+    }
+    .anim-slide .chapter-view.slide-out-right {
+      animation: slideOutRight 0.3s ease-in forwards;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOutLeft {
+      to { opacity: 0; transform: translateX(-40px); }
+    }
+    @keyframes slideOutRight {
+      to { opacity: 0; transform: translateX(40px); }
+    }
+
+    /* 淡入淡出 */
+    .anim-fade .chapter-view {
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* 翻书 */
+    .anim-flip .chapter-view {
+      animation: flipIn 0.6s ease-out;
+      perspective: 1200px;
+    }
+    @keyframes flipIn {
+      0% { opacity: 0; transform: rotateY(-90deg); transform-origin: left center; }
+      60% { opacity: 1; transform: rotateY(10deg); }
+      100% { transform: rotateY(0deg); }
+    }
+
+    /* 缩放 */
+    .anim-zoom .chapter-view {
+      animation: zoomIn 0.4s ease-out;
+    }
+    @keyframes zoomIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ===== 底部翻页栏 ===== */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 100;
+      transition: background 0.4s, border-color 0.4s;
+    }
+    .bottom-bar.show { display: flex; }
+
+    .bottom-btn {
+      padding: 10px 28px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 25px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .bottom-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .bottom-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .progress-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* ===== 加载状态 ===== */
+    .loading-overlay {
+      position: fixed;
+      top: 56px; left: 0; right: 0; bottom: 60px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, background 0.4s;
+    }
+    .loading-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 4px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+    .loading-text { color: var(--text-secondary); font-size: 14px; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 键盘提示 ===== */
+    .kbd-hint {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      display: none;
+      z-index: 90;
+    }
+    .bottom-bar.show ~ .kbd-hint { display: block; }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 600px) {
+      .toolbar { padding: 0 12px; }
+      .toolbar-title { display: none; }
+      .reader-container { padding: 66px 16px 80px; }
+      .welcome-screen h1 { font-size: 1.8rem; }
+      .chapter-header h1 { font-size: 1.3rem; }
+      .sidebar { width: 280px; }
+      .nav-btn { padding: 10px 20px; font-size: 13px; }
+      .bottom-bar { height: 52px; }
+      .kbd-hint { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部工具栏 -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <a href="index.html" class="home-link" title="返回首页">✦</a>
+      <button class="toolbar-btn" id="btnToc" title="目录">☰</button>
+    </div>
+    <div class="toolbar-center">
+      <span class="toolbar-title" id="toolbarTitle">斗破苍穹</span>
+    </div>
+    <div class="toolbar-right">
+      <button class="toolbar-btn" id="btnTheme" title="日/夜模式">☽</button>
+      <div class="dropdown">
+        <button class="toolbar-btn" id="btnFont" title="字体">A</button>
+        <div class="dropdown-menu" id="fontMenu">
+          <div class="dropdown-label">字体</div>
+          <div class="dropdown-item active" data-font="'Microsoft YaHei', sans-serif">雅黑</div>
+          <div class="dropdown-item" data-font="'SimSun', 'STSong', serif">宋体</div>
+          <div class="dropdown-item" data-font="'KaiTi', 'STKaiti', serif">楷体</div>
+          <div class="dropdown-item" data-font="'SimHei', 'STHeiti', sans-serif">黑体</div>
+        </div>
+      </div>
+      <div class="dropdown">
+        <button class="toolbar-btn" id="btnSize" title="字号">Aa</button>
+        <div class="dropdown-menu" id="sizeMenu">
+          <div class="dropdown-label">字号</div>
+          <div class="dropdown-item" data-size="15px">小</div>
+          <div class="dropdown-item active" data-size="18px">中</div>
+          <div class="dropdown-item" data-size="20px">大</div>
+          <div class="dropdown-item" data-size="24px">特大</div>
+        </div>
+      </div>
+      <div class="dropdown">
+        <button class="toolbar-btn" id="btnAnim" title="翻页动画">⇄</button>
+        <div class="dropdown-menu" id="animMenu">
+          <div class="dropdown-label">翻页效果</div>
+          <div class="dropdown-item active" data-anim="slide">滑动</div>
+          <div class="dropdown-item" data-anim="fade">淡入淡出</div>
+          <div class="dropdown-item" data-anim="flip">翻书</div>
+          <div class="dropdown-item" data-anim="zoom">缩放</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 侧边栏遮罩 -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- 侧边栏目录 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>📖 目录</h2>
+      <button class="sidebar-close" id="sidebarClose">✕</button>
+    </div>
+    <div class="volume-tabs" id="volumeTabs">
+      <button class="volume-tab active" data-vol="0">1-500章</button>
+      <button class="volume-tab" data-vol="1">501-1000章</button>
+      <button class="volume-tab" data-vol="2">1001-1500章</button>
+      <button class="volume-tab" data-vol="3">1501-1663章</button>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" id="searchInput" placeholder="搜索章节标题...">
+    </div>
+    <div class="chapter-list" id="chapterList">
+      <div class="sidebar-loading" id="sidebarLoading">
+        <div class="spinner"></div>
+        <div>请选择卷以加载章节</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 阅读区域 -->
+  <div class="reader-container" id="readerContainer">
+    <!-- 欢迎页 -->
+    <div class="welcome-screen" id="welcomeScreen">
+      <h1>斗破苍穹</h1>
+      <div class="author">天蚕土豆 著</div>
+      <div class="desc">
+        这里是属于斗气的世界，没有花俏艳丽的魔法，有的，仅仅是繁衍到巅峰的斗气！<br><br>
+        年仅15岁的少年萧炎，创造了家族空前绝后的修炼纪录，然而在11岁那年，他却突然丧失了所有的修炼天赋……<br><br>
+        三年之后，一纸休书，将他与纳兰嫣然的婚约解除。<br><br>
+        "三十年河东，三十年河西，莫欺少年穷！"
+      </div>
+      <button class="start-btn" id="startRead">开始阅读</button>
+    </div>
+
+    <!-- 章节内容 -->
+    <div class="chapter-view" id="chapterView">
+      <div class="chapter-header">
+        <h1 id="chapterTitle"></h1>
+        <div class="chapter-info" id="chapterInfo"></div>
+      </div>
+      <div class="chapter-content" id="chapterContent"></div>
+      <div class="chapter-nav">
+        <button class="nav-btn" id="prevChapter">← 上一章</button>
+        <button class="nav-btn primary" id="nextChapter">下一章 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载遮罩 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">正在加载小说数据...</div>
+  </div>
+
+  <!-- 底部翻页栏 -->
+  <div class="bottom-bar" id="bottomBar">
+    <button class="bottom-btn" id="bottomPrev">← 上一章</button>
+    <span class="progress-text" id="progressText">第 1 / 1663 章</span>
+    <button class="bottom-btn" id="bottomNext">下一章 →</button>
+  </div>
+
+  <div class="kbd-hint">← → 翻页 &nbsp;|&nbsp; Esc 关闭目录</div>
+
+  <script>
+    // ===== 配置 =====
+    const VOLUMES = [
+      { file: '斗破苍穹/斗破苍穹(1-500章).html', label: '1-500章', start: 1, end: 500 },
+      { file: '斗破苍穹/斗破苍穹(501-1000章).html', label: '501-1000章', start: 501, end: 1000 },
+      { file: '斗破苍穹/斗破苍穹(1001-1500章).html', label: '1001-1500章', start: 1001, end: 1500 },
+      { file: '斗破苍穹/斗破苍穹(1501-1663章).html', label: '1501-1663章', start: 1501, end: 1663 },
+    ];
+
+    const TOTAL_CHAPTERS = 1663;
+
+    // ===== 状态 =====
+    let chapters = [];          // 当前卷的章节列表 [{num, title, content}]
+    let allChapters = [];       // 所有已加载的章节（合并）
+    let currentVolIndex = -1;   // 当前加载的卷索引
+    let currentChapterIndex = -1; // 当前阅读的章节在 allChapters 中的索引
+    let loadedVolumes = new Set();
+    let isDark = false;
+    let currentAnim = 'slide';
+
+    // ===== DOM 引用 =====
+    const $ = id => document.getElementById(id);
+    const sidebar = $('sidebar');
+    const sidebarOverlay = $('sidebarOverlay');
+    const chapterList = $('chapterList');
+    const sidebarLoading = $('sidebarLoading');
+    const welcomeScreen = $('welcomeScreen');
+    const chapterView = $('chapterView');
+    const chapterTitle = $('chapterTitle');
+    const chapterInfo = $('chapterInfo');
+    const chapterContent = $('chapterContent');
+    const toolbarTitle = $('toolbarTitle');
+    const loadingOverlay = $('loadingOverlay');
+    const loadingText = $('loadingText');
+    const bottomBar = $('bottomBar');
+    const progressText = $('progressText');
+    const searchInput = $('searchInput');
+    const readerContainer = $('readerContainer');
+
+    // ===== 主题 =====
+    function setTheme(dark) {
+      isDark = dark;
+      document.documentElement.classList.toggle('dark', dark);
+      $('btnTheme').textContent = dark ? '☀' : '☽';
+      localStorage.setItem('reader_theme', dark ? 'dark' : 'light');
+    }
+
+    $('btnTheme').addEventListener('click', () => setTheme(!isDark));
+
+    // ===== 字体 =====
+    function setFont(font) {
+      document.documentElement.style.setProperty('--font-body', font);
+      localStorage.setItem('reader_font', font);
+      document.querySelectorAll('#fontMenu .dropdown-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.font === font);
+      });
+    }
+
+    $('fontMenu').addEventListener('click', e => {
+      const item = e.target.closest('.dropdown-item');
+      if (item) { setFont(item.dataset.font); closeAllDropdowns(); }
+    });
+
+    // ===== 字号 =====
+    function setSize(size) {
+      document.documentElement.style.setProperty('--font-size', size);
+      localStorage.setItem('reader_size', size);
+      document.querySelectorAll('#sizeMenu .dropdown-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.size === size);
+      });
+    }
+
+    $('sizeMenu').addEventListener('click', e => {
+      const item = e.target.closest('.dropdown-item');
+      if (item) { setSize(item.dataset.size); closeAllDropdowns(); }
+    });
+
+    // ===== 翻页动画 =====
+    function setAnim(anim) {
+      currentAnim = anim;
+      readerContainer.className = 'reader-container anim-' + anim;
+      localStorage.setItem('reader_anim', anim);
+      document.querySelectorAll('#animMenu .dropdown-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.anim === anim);
+      });
+    }
+
+    $('animMenu').addEventListener('click', e => {
+      const item = e.target.closest('.dropdown-item');
+      if (item) { setAnim(item.dataset.anim); closeAllDropdowns(); }
+    });
+
+    // ===== 下拉菜单 =====
+    function closeAllDropdowns() {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+    }
+
+    document.querySelectorAll('.dropdown').forEach(dropdown => {
+      const btn = dropdown.querySelector('.toolbar-btn');
+      const menu = dropdown.querySelector('.dropdown-menu');
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = menu.classList.contains('show');
+        closeAllDropdowns();
+        if (!isOpen) menu.classList.add('show');
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.dropdown')) closeAllDropdowns();
+    });
+
+    // ===== 侧边栏 =====
+    function openSidebar() {
+      sidebar.classList.add('open');
+      sidebarOverlay.classList.add('show');
+    }
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    }
+
+    $('btnToc').addEventListener('click', openSidebar);
+    $('sidebarClose').addEventListener('click', closeSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
+    // ===== 卷加载 =====
+    async function loadVolume(volIndex) {
+      if (loadedVolumes.has(volIndex)) {
+        renderChapterList(volIndex);
+        return;
+      }
+
+      const vol = VOLUMES[volIndex];
+      sidebarLoading.innerHTML = '<div class="spinner"></div><div>正在解析章节...</div>';
+
+      try {
+        const resp = await fetch(vol.file);
+        if (!resp.ok) throw new Error('加载失败');
+        const text = await resp.text();
+
+        // 正则解析章节
+        // 章节格式：第X章 标题（独占一行）
+        const chapterRegex = /^第(\d+)章\s+(.+)$/gm;
+        const matches = [];
+        let match;
+        while ((match = chapterRegex.exec(text)) !== null) {
+          matches.push({
+            num: parseInt(match[1]),
+            title: match[2].trim(),
+            index: match.index,
+            titleEnd: match.index + match[0].length
+          });
+        }
+
+        const parsed = [];
+        for (let i = 0; i < matches.length; i++) {
+          const m = matches[i];
+          const contentStart = m.titleEnd;
+          const contentEnd = (i + 1 < matches.length) ? matches[i + 1].index : text.length;
+          let content = text.substring(contentStart, contentEnd);
+          // 移除末尾的(本章完)标记
+          content = content.replace(/\(本章完\)\s*$/, '').trim();
+          // 去掉重复的章节标题行（有些文件在正文开头重复了标题）
+          const firstLine = content.split('\n')[0].trim();
+          if (firstLine.startsWith('第' + m.num + '章')) {
+            content = content.substring(content.indexOf('\n') + 1).trim();
+          }
+          parsed.push({
+            num: m.num,
+            title: '第' + m.num + '章 ' + m.title,
+            content: content
+          });
+        }
+
+        // 存入卷数据
+        VOLUMES[volIndex].chapters = parsed;
+        loadedVolumes.add(volIndex);
+
+        // 合并到 allChapters
+        rebuildAllChapters();
+
+        renderChapterList(volIndex);
+      } catch (err) {
+        sidebarLoading.innerHTML = '<div style="color:#c00;">加载失败: ' + err.message + '</div>';
+      }
+    }
+
+    function rebuildAllChapters() {
+      allChapters = [];
+      for (let i = 0; i < VOLUMES.length; i++) {
+        if (VOLUMES[i].chapters) {
+          allChapters.push(...VOLUMES[i].chapters);
+        }
+      }
+      allChapters.sort((a, b) => a.num - b.num);
+    }
+
+    function renderChapterList(volIndex) {
+      currentVolIndex = volIndex;
+      document.querySelectorAll('.volume-tab').forEach(t => {
+        t.classList.toggle('active', parseInt(t.dataset.vol) === volIndex);
+      });
+
+      const chapData = VOLUMES[volIndex].chapters;
+      if (!chapData || chapData.length === 0) {
+        chapterList.innerHTML = '<div class="sidebar-loading">暂无章节</div>';
+        return;
+      }
+
+      let html = '';
+      chapData.forEach(ch => {
+        const active = currentChapterIndex >= 0 && allChapters[currentChapterIndex]?.num === ch.num;
+        html += `<div class="chapter-item${active ? ' active' : ''}" data-num="${ch.num}">${ch.title}</div>`;
+      });
+      chapterList.innerHTML = html;
+
+      // 滚动到当前章节
+      const activeEl = chapterList.querySelector('.active');
+      if (activeEl) activeEl.scrollIntoView({ block: 'center' });
+    }
+
+    // 卷标签点击
+    $('volumeTabs').addEventListener('click', e => {
+      const tab = e.target.closest('.volume-tab');
+      if (tab) {
+        const vol = parseInt(tab.dataset.vol);
+        loadVolume(vol);
+      }
+    });
+
+    // 章节点击
+    chapterList.addEventListener('click', e => {
+      const item = e.target.closest('.chapter-item');
+      if (item) {
+        const num = parseInt(item.dataset.num);
+        const idx = allChapters.findIndex(c => c.num === num);
+        if (idx >= 0) {
+          showChapter(idx);
+          closeSidebar();
+        }
+      }
+    });
+
+    // 搜索
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim();
+      const items = chapterList.querySelectorAll('.chapter-item');
+      items.forEach(el => {
+        el.style.display = el.textContent.includes(q) ? '' : 'none';
+      });
+    });
+
+    // ===== 显示章节 =====
+    function showChapter(index) {
+      if (index < 0 || index >= allChapters.length) return;
+
+      // 触发动画重置
+      chapterView.classList.remove('active');
+      void chapterView.offsetWidth; // 强制重排
+
+      currentChapterIndex = index;
+      const ch = allChapters[index];
+
+      // 更新标题
+      chapterTitle.textContent = ch.title;
+      chapterInfo.textContent = `第 ${index + 1} / ${TOTAL_CHAPTERS} 章`;
+      toolbarTitle.textContent = ch.title;
+
+      // 格式化内容：按段落分割
+      const paragraphs = ch.content
+        .split(/\n+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      chapterContent.innerHTML = paragraphs
+        .map(p => `<p>${escapeHtml(p)}</p>`)
+        .join('');
+
+      // 切换视图
+      welcomeScreen.style.display = 'none';
+      chapterView.classList.add('active');
+      bottomBar.classList.add('show');
+
+      // 更新导航按钮
+      updateNavButtons();
+
+      // 更新进度
+      progressText.textContent = `第 ${ch.num} / ${TOTAL_CHAPTERS} 章`;
+
+      // 滚动到顶部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // 更新侧边栏高亮
+      document.querySelectorAll('.chapter-item').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.num) === ch.num);
+      });
+
+      // 保存阅读进度
+      saveProgress();
+    }
+
+    function updateNavButtons() {
+      const hasPrev = currentChapterIndex > 0;
+      const hasNext = currentChapterIndex < allChapters.length - 1;
+      $('prevChapter').disabled = !hasPrev;
+      $('nextChapter').disabled = !hasNext;
+      $('bottomPrev').disabled = !hasPrev;
+      $('bottomNext').disabled = !hasNext;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ===== 翻页 =====
+    function goPrev() {
+      if (currentChapterIndex > 0) showChapter(currentChapterIndex - 1);
+    }
+    function goNext() {
+      if (currentChapterIndex < allChapters.length - 1) showChapter(currentChapterIndex + 1);
+    }
+
+    $('prevChapter').addEventListener('click', goPrev);
+    $('nextChapter').addEventListener('click', goNext);
+    $('bottomPrev').addEventListener('click', goPrev);
+    $('bottomNext').addEventListener('click', goNext);
+
+    // ===== 开始阅读 =====
+    $('startRead').addEventListener('click', () => {
+      // 默认加载第一卷并跳到上次阅读位置
+      const saved = loadProgress();
+      if (saved && saved.chapterNum) {
+        // 尝试定位到保存的章节
+        loadVolumeForChapter(saved.chapterNum);
+      } else {
+        loadVolume(0);
+        // 等加载完后显示第一章
+        const check = setInterval(() => {
+          if (VOLUMES[0].chapters && VOLUMES[0].chapters.length > 0) {
+            clearInterval(check);
+            showChapter(0);
+          }
+        }, 100);
+      }
+    });
+
+    async function loadVolumeForChapter(chapterNum) {
+      // 找到对应卷
+      const volIndex = VOLUMES.findIndex(v => chapterNum >= v.start && chapterNum <= v.end);
+      if (volIndex < 0) return;
+
+      showLoading('正在加载第 ' + VOLUMES[volIndex].label + ' ...');
+      await loadVolume(volIndex);
+      hideLoading();
+
+      const idx = allChapters.findIndex(c => c.num === chapterNum);
+      if (idx >= 0) {
+        showChapter(idx);
+        // 恢复滚动位置
+        const saved = loadProgress();
+        if (saved && saved.scrollY) {
+          setTimeout(() => window.scrollTo(0, saved.scrollY), 200);
+        }
+      } else {
+        showChapter(0);
+      }
+    }
+
+    // ===== 加载状态 =====
+    function showLoading(text) {
+      loadingText.textContent = text || '加载中...';
+      loadingOverlay.classList.add('show');
+    }
+    function hideLoading() {
+      loadingOverlay.classList.remove('show');
+    }
+
+    // ===== 阅读进度保存/恢复 =====
+    function saveProgress() {
+      if (currentChapterIndex >= 0 && allChapters[currentChapterIndex]) {
+        const data = {
+          chapterNum: allChapters[currentChapterIndex].num,
+          scrollY: window.scrollY
+        };
+        localStorage.setItem('reader_progress', JSON.stringify(data));
+      }
+    }
+
+    function loadProgress() {
+      try {
+        return JSON.parse(localStorage.getItem('reader_progress'));
+      } catch { return null; }
+    }
+
+    // 滚动时更新保存
+    let scrollTimer;
+    window.addEventListener('scroll', () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(saveProgress, 500);
+    });
+
+    // ===== 键盘快捷键 =====
+    document.addEventListener('keydown', e => {
+      // 关闭目录
+      if (e.key === 'Escape') {
+        closeSidebar();
+        closeAllDropdowns();
+        return;
+      }
+      // 翻页（仅在阅读模式下）
+      if (chapterView.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); goNext(); }
+      }
+    });
+
+    // ===== 初始化 =====
+    function init() {
+      // 恢复主题
+      const savedTheme = localStorage.getItem('reader_theme');
+      setTheme(savedTheme === 'dark');
+
+      // 恢复字体
+      const savedFont = localStorage.getItem('reader_font');
+      if (savedFont) setFont(savedFont);
+
+      // 恢复字号
+      const savedSize = localStorage.getItem('reader_size');
+      if (savedSize) setSize(savedSize);
+
+      // 恢复动画
+      const savedAnim = localStorage.getItem('reader_anim');
+      if (savedAnim) setAnim(savedAnim);
+
+      // 检查是否有保存的阅读进度
+      const saved = loadProgress();
+      if (saved && saved.chapterNum) {
+        // 自动加载并恢复
+        loadVolumeForChapter(saved.chapterNum);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
