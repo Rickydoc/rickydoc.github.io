@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - 迷路在星际之中</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: #0a0a1a;
+      color: #e0e0ff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite ease-in-out;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
+    }
+
+    .meteor {
+      position: fixed;
+      width: 2px; height: 80px;
+      background: linear-gradient(to bottom, rgba(124, 92, 255, 0.8), transparent);
+      transform: rotate(-45deg);
+      animation: meteor 4s linear infinite;
+      opacity: 0;
+      z-index: 0;
+    }
+    .meteor:nth-child(1) { top: 10%; left: 20%; animation-delay: 0s; }
+    .meteor:nth-child(2) { top: 5%; left: 50%; animation-delay: 1.5s; }
+    .meteor:nth-child(3) { top: 15%; left: 75%; animation-delay: 3s; }
+
+    @keyframes meteor {
+      0% { opacity: 0; transform: rotate(-45deg) translate(0, 0); }
+      10% { opacity: 1; }
+      100% { opacity: 0; transform: rotate(-45deg) translate(-400px, 400px); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px;
+      max-width: 550px;
+      width: 90%;
+    }
+
+    .error-code {
+      font-size: 10rem;
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, #7c5cff, #e2b340);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: float 3s ease-in-out infinite;
+      user-select: none;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    .error-title {
+      font-size: 1.8rem;
+      margin: 20px 0 12px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .error-desc {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 40px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 36px;
+      text-decoration: none;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7c5cff, #9d7cff);
+      color: white;
+      box-shadow: 0 4px 25px rgba(124, 92, 255, 0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 35px rgba(124, 92, 255, 0.6);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #e2b340;
+      border: 1px solid rgba(226, 179, 64, 0.4);
+    }
+    .btn-secondary:hover {
+      background: rgba(226, 179, 64, 0.1);
+      border-color: #e2b340;
+      transform: translateY(-3px);
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 600px) {
+      .error-code { font-size: 6rem; }
+      .error-title { font-size: 1.3rem; }
+      .buttons { flex-direction: column; align-items: center; }
+      .btn { width: 200px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  <div class="meteor"></div>
+  <div class="meteor"></div>
+  <div class="meteor"></div>
+
+  <div class="container">
+    <div class="error-code">404</div>
+    <h1 class="error-title">迷路在星际之中…</h1>
+    <p class="error-desc">
+      你要寻找的页面已消失在时空裂缝中。<br>
+      记忆编织者正在努力修复这片区域的记忆碎片。
+    </p>
+    <div class="buttons">
+      <a href="index.html" class="btn btn-primary">返回首页</a>
+      <a href="game.html" class="btn btn-secondary">进入游戏</a>
+    </div>
+  </div>
+
+  <div class="footer">星尘编年史 © 2026</div>
+
+  <script>
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 120; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.animationDelay = Math.random() * 3 + 's';
+      star.style.animationDuration = (2 + Math.random() * 3) + 's';
+      starsContainer.appendChild(star);
+    }
+  </script>
+</body>
+</html>
