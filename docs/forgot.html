@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>忘记密码 - 星尘编年史</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+  <!-- 星空背景 -->
+  <div class="stars" id="stars"></div>
+
+  <!-- 导航栏 -->
+  <div id="app-navbar"></div>
+
+  <!-- 忘记密码卡片 -->
+  <div class="page-container" id="app">
+    <div class="auth-card">
+      <!-- 步骤 1: 输入邮箱 -->
+      <div v-if="step === 1">
+        <h1 class="card-title">忘记密码</h1>
+        <p class="card-subtitle">输入您的注册邮箱，我们将发送验证码</p>
+
+        <el-form :model="form" :rules="rules" ref="emailForm">
+          <el-form-item prop="email">
+            <el-input
+              v-model="form.email"
+              prefix-icon="el-icon-message"
+              placeholder="请输入注册邮箱"
+              clearable
+              @keyup.enter.native="sendCode"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item>
+            <el-button
+              type="primary"
+              :loading="loading"
+              @click="sendCode"
+              style="width: 100%;"
+            >
+              {{ loading ? '发送中...' : '发送验证码' }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 步骤 2: 输入验证码和新密码 -->
+      <div v-if="step === 2">
+        <h1 class="card-title">重置密码</h1>
+        <p class="card-subtitle">验证码已发送至 {{ form.email }}</p>
+
+        <el-form :model="form" :rules="rules2" ref="resetForm">
+          <el-form-item prop="verifyCode">
+            <el-input
+              v-model="form.verifyCode"
+              prefix-icon="el-icon-key"
+              placeholder="请输入验证码"
+              clearable
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item prop="newPassword">
+            <el-input
+              v-model="form.newPassword"
+              prefix-icon="el-icon-lock"
+              placeholder="请输入新密码（至少6位）"
+              show-password
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item prop="confirmPassword">
+            <el-input
+              v-model="form.confirmPassword"
+              prefix-icon="el-icon-lock"
+              placeholder="请再次输入新密码"
+              show-password
+              @keyup.enter.native="resetPassword"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item>
+            <el-button
+              type="primary"
+              :loading="loading"
+              @click="resetPassword"
+              style="width: 100%;"
+            >
+              {{ loading ? '重置中...' : '重置密码' }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+
+        <div style="text-align: center;">
+          <el-button type="text" @click="step = 1">← 返回重新输入邮箱</el-button>
+        </div>
+      </div>
+
+      <!-- 步骤 3: 成功 -->
+      <div v-if="step === 3" style="text-align: center; padding: 20px 0;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+        <h2 style="color: var(--success); margin-bottom: 10px;">密码重置成功！</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">您的密码已成功重置，请使用新密码登录</p>
+        <el-button type="primary">
+          <a href="login.html" style="color: white; text-decoration: none;">前往登录</a>
+        </el-button>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;" v-if="step < 3">
+        <a href="login.html" style="font-size: 0.85rem; color: var(--text-muted);">
+          ← 返回登录
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">星尘编年史 © 2026</div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/vue@2.7.16/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    // 创建星空背景
+    createStars('stars');
+
+    // 渲染导航栏
+    renderNavbar('forgot');
+    renderThemeSwitcher();
+
+    // Vue 实例
+    new Vue({
+      el: '#app',
+      data() {
+        const validateConfirm = (rule, value, callback) => {
+          if (value !== this.form.newPassword) {
+            callback(new Error('两次输入的密码不一致'));
+          } else {
+            callback();
+          }
+        };
+
+        return {
+          step: 1,
+          loading: false,
+          form: {
+            email: '',
+            verifyCode: '',
+            newPassword: '',
+            confirmPassword: ''
+          },
+          rules: {
+            email: [
+              { required: true, message: '请输入邮箱', trigger: 'blur' },
+              { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+            ]
+          },
+          rules2: {
+            verifyCode: [
+              { required: true, message: '请输入验证码', trigger: 'blur' }
+            ],
+            newPassword: [
+              { required: true, message: '请输入新密码', trigger: 'blur' },
+              { min: 6, message: '密码长度不能少于 6 个字符', trigger: 'blur' }
+            ],
+            confirmPassword: [
+              { required: true, message: '请再次输入密码', trigger: 'blur' },
+              { validator: validateConfirm, trigger: 'blur' }
+            ]
+          }
+        };
+      },
+      methods: {
+        // 发送验证码
+        sendCode() {
+          this.$refs.emailForm.validate(async (valid) => {
+            if (!valid) return;
+
+            this.loading = true;
+            try {
+              const res = await fetch(API_BASE + '/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: this.form.email })
+              });
+              const data = await res.json();
+
+              if (data.code === 200) {
+                this.$message.success('验证码已发送，请查收邮箱');
+                this.step = 2;
+              } else {
+                this.$message.error(data.message || '发送失败');
+              }
+            } catch (err) {
+              this.$message.error('网络错误，请检查后端服务是否启动');
+            } finally {
+              this.loading = false;
+            }
+          });
+        },
+
+        // 重置密码
+        resetPassword() {
+          this.$refs.resetForm.validate(async (valid) => {
+            if (!valid) return;
+
+            this.loading = true;
+            try {
+              const res = await fetch(API_BASE + '/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: this.form.email,
+                  verifyCode: this.form.verifyCode,
+                  newPassword: this.form.newPassword
+                })
+              });
+              const data = await res.json();
+
+              if (data.code === 200) {
+                this.step = 3;
+                this.$message.success('密码重置成功');
+              } else {
+                this.$message.error(data.message || '重置失败');
+              }
+            } catch (err) {
+              this.$message.error('网络错误，请检查后端服务是否启动');
+            } finally {
+              this.loading = false;
+            }
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>

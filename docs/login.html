@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 星尘编年史</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+  <!-- 星空背景 -->
+  <div class="stars" id="stars"></div>
+
+  <!-- 导航栏 -->
+  <div id="app-navbar"></div>
+
+  <!-- 登录卡片 -->
+  <div class="page-container" id="app">
+    <div class="auth-card">
+      <h1 class="card-title">欢迎回来</h1>
+      <p class="card-subtitle">登录您的星尘编年史账号</p>
+
+      <el-form :model="form" :rules="rules" ref="loginForm" @submit.native.prevent="handleLogin">
+        <el-form-item prop="username">
+          <el-input
+            v-model="form.username"
+            prefix-icon="el-icon-user"
+            placeholder="请输入用户名或邮箱"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item prop="password">
+          <el-input
+            v-model="form.password"
+            prefix-icon="el-icon-lock"
+            placeholder="请输入密码"
+            show-password
+            @keyup.enter.native="handleLogin"
+          ></el-input>
+        </el-form-item>
+
+        <div class="link-row" style="margin-bottom: 20px;">
+          <el-checkbox v-model="form.remember">记住我</el-checkbox>
+          <a href="forgot.html">忘记密码？</a>
+        </div>
+
+        <el-form-item>
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleLogin"
+            style="width: 100%;"
+          >
+            {{ loading ? '登录中...' : '登 录' }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <div class="divider-text"><span>还没有账号？</span></div>
+
+      <el-button
+        style="width: 100%;"
+        @click="$router ? null : window.location.href='register.html'"
+      >
+        <a href="register.html" style="color: inherit; text-decoration: none;">立即注册</a>
+      </el-button>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted);">
+          ← 返回首页
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">星尘编年史 © 2026</div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/vue@2.7.16/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    // 创建星空背景
+    createStars('stars');
+
+    // 渲染导航栏
+    renderNavbar('login');
+    renderThemeSwitcher();
+
+    // Vue 实例
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          loading: false,
+          form: {
+            username: '',
+            password: '',
+            remember: false
+          },
+          rules: {
+            username: [
+              { required: true, message: '请输入用户名或邮箱', trigger: 'blur' }
+            ],
+            password: [
+              { required: true, message: '请输入密码', trigger: 'blur' },
+              { min: 6, message: '密码长度不能少于 6 个字符', trigger: 'blur' }
+            ]
+          }
+        };
+      },
+      mounted() {
+        // 如果已登录，跳转到主页
+        if (isLoggedIn()) {
+          window.location.href = 'home.html';
+          return;
+        }
+        // 读取记住的用户名
+        const remembered = localStorage.getItem('stardust_remember');
+        if (remembered) {
+          this.form.username = remembered;
+          this.form.remember = true;
+        }
+      },
+      methods: {
+        handleLogin() {
+          this.$refs.loginForm.validate(async (valid) => {
+            if (!valid) return;
+
+            this.loading = true;
+            try {
+              const res = await fetch(API_BASE + '/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  username: this.form.username,
+                  password: this.form.password
+                })
+              });
+              const data = await res.json();
+
+              if (data.code === 200) {
+                // 保存登录信息
+                saveAuth(data.data.token, data.data.user);
+
+                // 记住用户名
+                if (this.form.remember) {
+                  localStorage.setItem('stardust_remember', this.form.username);
+                } else {
+                  localStorage.removeItem('stardust_remember');
+                }
+
+                this.$message.success('登录成功！');
+                setTimeout(() => {
+                  window.location.href = 'home.html';
+                }, 800);
+              } else {
+                this.$message.error(data.message || '登录失败');
+              }
+            } catch (err) {
+              this.$message.error('网络错误，请检查后端服务是否启动');
+            } finally {
+              this.loading = false;
+            }
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主页 - 星尘编年史</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  <div id="app-navbar"></div>
+
+  <div id="app">
+    <div class="content-area">
+      <!-- 欢迎横幅 -->
+      <div class="welcome-banner">
+        <h1 class="welcome-title">欢迎回来，{{ user.nickname || user.username || '旅行者' }} ✨</h1>
+        <p class="welcome-desc">
+          在星尘编年史的世界中，您是一名记忆编织者。<br>
+          穿越不同的记忆碎片，修复被黑暗侵蚀的世界线。
+        </p>
+        <div style="margin-top: 20px;">
+          <el-button type="primary" size="medium">
+            <a href="game.html" style="color: white; text-decoration: none;">🎮 继续旅程</a>
+          </el-button>
+          <el-button size="medium" style="margin-left: 10px;">
+            <a href="reader.html" style="color: inherit; text-decoration: none;">📚 阅读小说</a>
+          </el-button>
+        </div>
+      </div>
+
+      <!-- 服务器统计数据（来自 login_users 表） -->
+      <h2 style="color: var(--text-primary); margin-bottom: 20px; font-size: 1.3rem;">
+        📊 我的数据 <span style="font-size: 0.8rem; color: var(--text-muted);">— 来自 login_users 表</span>
+      </h2>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">{{ loginUser.login_days || 0 }}</div>
+          <div class="stat-label">登录天数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ loginUser.game_progress || 0 }}%</div>
+          <div class="stat-label">游戏进度</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ loginUser.reading_progress || 0 }}</div>
+          <div class="stat-label">已读章节</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ achievementCount }}</div>
+          <div class="stat-label">获得成就</div>
+        </div>
+      </div>
+
+      <!-- 功能卡片 -->
+      <h2 style="color: var(--text-primary); margin-bottom: 20px; font-size: 1.3rem;">🚀 快速入口</h2>
+      <div class="feature-grid">
+        <div class="feature-card" onclick="window.location.href='game.html'">
+          <div class="feature-icon">🎮</div>
+          <div class="feature-name">文字冒险</div>
+          <div class="feature-desc">当前场景: {{ loginUser.game_scene || '未开始' }}</div>
+        </div>
+        <div class="feature-card" onclick="window.location.href='reader.html'">
+          <div class="feature-icon">📚</div>
+          <div class="feature-name">小说阅读</div>
+          <div class="feature-desc">当前阅读: {{ loginUser.reading_book || '未选择' }}</div>
+        </div>
+        <div class="feature-card" onclick="window.location.href='profile.html'">
+          <div class="feature-icon">👤</div>
+          <div class="feature-name">个人中心</div>
+          <div class="feature-desc">管理您的个人资料和账号设置</div>
+        </div>
+      </div>
+
+      <!-- 用户列表（来自 users 表 + login_users 表联合查询） -->
+      <h2 style="color: var(--text-primary); margin: 30px 0 20px; font-size: 1.3rem;">
+        👥 注册用户列表 <span style="font-size: 0.8rem; color: var(--text-muted);">— users + login_users 联合查询</span>
+        <el-button type="text" icon="el-icon-refresh" @click="fetchUserList" style="margin-left: 10px;">刷新</el-button>
+      </h2>
+      <div class="profile-section" v-loading="usersLoading">
+        <el-table
+          :data="userList"
+          style="width: 100%"
+          :header-cell-style="{ background: 'rgba(255,255,255,0.05)', color: '#e0e0ff', border: 'none' }"
+          :cell-style="{ background: 'transparent', color: '#e0e0ff', border: '1px solid rgba(255,255,255,0.05)' }"
+          empty-text="暂无用户数据"
+        >
+          <el-table-column prop="id" label="ID" width="50"></el-table-column>
+          <el-table-column prop="username" label="用户名" width="100"></el-table-column>
+          <el-table-column prop="nickname" label="昵称" width="100"></el-table-column>
+          <el-table-column prop="email" label="邮箱" min-width="160"></el-table-column>
+          <el-table-column prop="game_progress" label="游戏进度" width="80">
+            <template slot-scope="scope">{{ scope.row.game_progress || 0 }}%</template>
+          </el-table-column>
+          <el-table-column prop="reading_book" label="当前阅读" width="100">
+            <template slot-scope="scope">{{ scope.row.reading_book || '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="login_days" label="登录天数" width="80">
+            <template slot-scope="scope">{{ scope.row.login_days || 0 }}</template>
+          </el-table-column>
+          <el-table-column prop="created_at" label="注册时间" width="160">
+            <template slot-scope="scope">{{ formatDate(scope.row.created_at) }}</template>
+          </el-table-column>
+        </el-table>
+
+        <div style="text-align: center; margin-top: 20px;" v-if="serverStats.totalUsers > 0">
+          <el-pagination
+            background
+            layout="prev, pager, next"
+            :total="serverStats.totalUsers"
+            :page-size="serverStats.pageSize"
+            :current-page.sync="serverStats.currentPage"
+            @current-change="handlePageChange"
+          ></el-pagination>
+        </div>
+      </div>
+
+      <!-- 最近动态 -->
+      <h2 style="color: var(--text-primary); margin: 30px 0 20px; font-size: 1.3rem;">📋 最近动态</h2>
+      <div class="profile-section">
+        <div v-for="(item, index) in activities" :key="index"
+          style="display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--glass-border);">
+          <span style="font-size: 1.5rem; margin-right: 15px;">{{ item.icon }}</span>
+          <div style="flex: 1;">
+            <div style="color: var(--text-primary); font-size: 0.95rem;">{{ item.text }}</div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 3px;">{{ item.time }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">星尘编年史 © 2026</div>
+  </div>
+
+  <script src="https://unpkg.com/vue@2.7.16/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    createStars('stars');
+    renderNavbar('home');
+    renderThemeSwitcher();
+
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          user: {},
+          loginUser: {},
+          userList: [],
+          usersLoading: false,
+          serverStats: { totalUsers: 0, currentPage: 1, pageSize: 10 },
+          activities: [
+            { icon: '🎉', text: '成功登录星尘编年史', time: '刚刚' }
+          ]
+        };
+      },
+      computed: {
+        achievementCount() {
+          if (!this.loginUser || !this.loginUser.achievements) return 0;
+          try {
+            const arr = typeof this.loginUser.achievements === 'string'
+              ? JSON.parse(this.loginUser.achievements)
+              : this.loginUser.achievements;
+            return Array.isArray(arr) ? arr.length : 0;
+          } catch { return 0; }
+        }
+      },
+      mounted() {
+        if (!requireAuth()) return;
+        this.user = getUser() || {};
+        this.fetchProfile();
+        this.fetchUserList();
+      },
+      methods: {
+        async fetchProfile() {
+          try {
+            const data = await authFetch(API_BASE + '/profile');
+            if (data && data.code === 200) {
+              this.user = data.data;
+              this.loginUser = data.data.loginUser || {};
+              saveAuth(getToken(), { ...getUser(), ...data.data });
+            }
+          } catch (err) {
+            console.error('获取用户信息失败:', err);
+          }
+        },
+        async fetchUserList() {
+          this.usersLoading = true;
+          try {
+            const data = await authFetch(
+              API_BASE + '/users?page=' + this.serverStats.currentPage + '&pageSize=' + this.serverStats.pageSize
+            );
+            if (data && data.code === 200) {
+              this.userList = data.data.list;
+              this.serverStats.totalUsers = data.data.total;
+            }
+          } catch (err) {
+            console.error('获取用户列表失败:', err);
+          } finally {
+            this.usersLoading = false;
+          }
+        },
+        handlePageChange(page) {
+          this.serverStats.currentPage = page;
+          this.fetchUserList();
+        },
+        formatDate(dateStr) {
+          if (!dateStr) return '';
+          const d = new Date(dateStr);
+          return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0') + ' ' +
+            String(d.getHours()).padStart(2, '0') + ':' +
+            String(d.getMinutes()).padStart(2, '0');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注册 - 星尘编年史</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+  <!-- 星空背景 -->
+  <div class="stars" id="stars"></div>
+
+  <!-- 导航栏 -->
+  <div id="app-navbar"></div>
+
+  <!-- 注册卡片 -->
+  <div class="page-container" id="app">
+    <div class="auth-card">
+      <h1 class="card-title">创建账号</h1>
+      <p class="card-subtitle">加入星尘编年史，开启您的旅程</p>
+
+      <el-form :model="form" :rules="rules" ref="registerForm" @submit.native.prevent="handleRegister">
+        <el-form-item prop="username">
+          <el-input
+            v-model="form.username"
+            prefix-icon="el-icon-user"
+            placeholder="请输入用户名（3-20个字符）"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item prop="email">
+          <el-input
+            v-model="form.email"
+            prefix-icon="el-icon-message"
+            placeholder="请输入邮箱地址"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item prop="nickname">
+          <el-input
+            v-model="form.nickname"
+            prefix-icon="el-icon-user-solid"
+            placeholder="请输入昵称（选填）"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item prop="password">
+          <el-input
+            v-model="form.password"
+            prefix-icon="el-icon-lock"
+            placeholder="请输入密码（至少6位）"
+            show-password
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item prop="confirmPassword">
+          <el-input
+            v-model="form.confirmPassword"
+            prefix-icon="el-icon-lock"
+            placeholder="请再次输入密码"
+            show-password
+            @keyup.enter.native="handleRegister"
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item prop="agree">
+          <el-checkbox v-model="form.agree">
+            我已阅读并同意
+            <a href="#" @click.prevent="showTerms = true" style="color: var(--accent-light);">用户协议</a>
+          </el-checkbox>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleRegister"
+            style="width: 100%;"
+          >
+            {{ loading ? '注册中...' : '立即注册' }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <div class="divider-text"><span>已有账号？</span></div>
+
+      <el-button style="width: 100%;">
+        <a href="login.html" style="color: inherit; text-decoration: none;">返回登录</a>
+      </el-button>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted);">
+          ← 返回首页
+        </a>
+      </div>
+    </div>
+
+    <!-- 用户协议对话框 -->
+    <el-dialog title="用户协议" :visible.sync="showTerms" width="90%" :show-close="true">
+      <div style="max-height: 400px; overflow-y: auto; line-height: 1.8; color: var(--text-secondary);">
+        <h3 style="color: var(--text-primary); margin-bottom: 10px;">星尘编年史 用户协议</h3>
+        <p>欢迎使用星尘编年史。使用本服务即表示您同意以下条款：</p>
+        <p>1. 您的账号信息将被安全存储，密码经过加密处理。</p>
+        <p>2. 请妥善保管您的账号密码，不要与他人分享。</p>
+        <p>3. 本服务仅供学习和娱乐使用。</p>
+        <p>4. 我们承诺保护您的个人隐私信息。</p>
+      </div>
+    </el-dialog>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">星尘编年史 © 2026</div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/vue@2.7.16/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    // 创建星空背景
+    createStars('stars');
+
+    // 渲染导航栏
+    renderNavbar('register');
+    renderThemeSwitcher();
+
+    // Vue 实例
+    new Vue({
+      el: '#app',
+      data() {
+        // 确认密码验证
+        const validateConfirm = (rule, value, callback) => {
+          if (value !== this.form.password) {
+            callback(new Error('两次输入的密码不一致'));
+          } else {
+            callback();
+          }
+        };
+
+        // 协议勾选验证
+        const validateAgree = (rule, value, callback) => {
+          if (!value) {
+            callback(new Error('请同意用户协议'));
+          } else {
+            callback();
+          }
+        };
+
+        return {
+          loading: false,
+          showTerms: false,
+          form: {
+            username: '',
+            email: '',
+            nickname: '',
+            password: '',
+            confirmPassword: '',
+            agree: false
+          },
+          rules: {
+            username: [
+              { required: true, message: '请输入用户名', trigger: 'blur' },
+              { min: 3, max: 20, message: '用户名长度为 3-20 个字符', trigger: 'blur' }
+            ],
+            email: [
+              { required: true, message: '请输入邮箱', trigger: 'blur' },
+              { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+            ],
+            password: [
+              { required: true, message: '请输入密码', trigger: 'blur' },
+              { min: 6, message: '密码长度不能少于 6 个字符', trigger: 'blur' }
+            ],
+            confirmPassword: [
+              { required: true, message: '请再次输入密码', trigger: 'blur' },
+              { validator: validateConfirm, trigger: 'blur' }
+            ],
+            agree: [
+              { validator: validateAgree, trigger: 'change' }
+            ]
+          }
+        };
+      },
+      mounted() {
+        if (isLoggedIn()) {
+          window.location.href = 'home.html';
+        }
+      },
+      methods: {
+        handleRegister() {
+          this.$refs.registerForm.validate(async (valid) => {
+            if (!valid) return;
+
+            this.loading = true;
+            try {
+              const res = await fetch(API_BASE + '/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  username: this.form.username,
+                  email: this.form.email,
+                  password: this.form.password,
+                  nickname: this.form.nickname || this.form.username
+                })
+              });
+              const data = await res.json();
+
+              if (data.code === 200) {
+                saveAuth(data.data.token, data.data.user);
+                this.$message.success('注册成功！正在跳转...');
+                setTimeout(() => {
+                  window.location.href = 'home.html';
+                }, 800);
+              } else {
+                this.$message.error(data.message || '注册失败');
+              }
+            } catch (err) {
+              this.$message.error('网络错误，请检查后端服务是否启动');
+            } finally {
+              this.loading = false;
+            }
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
