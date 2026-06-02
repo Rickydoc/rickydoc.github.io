@@ -4,57 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>星尘编年史 - 文字冒险游戏</title>
+  <link rel="stylesheet" href="css/common.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --bg-primary: #0a0a1a;
-      --text-primary: #e0e0ff;
-      --accent: #7c5cff;
-      --gold: #ffd700;
-    }
-
-    body {
-      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-
-    /* 星空背景 */
-    .stars {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .star {
-      position: absolute;
-      width: 2px;
-      height: 2px;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle 3s infinite ease-in-out;
-    }
-
-    @keyframes twinkle {
-      0%, 100% { opacity: 0.3; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.5); }
-    }
-
-    /* 主容器 */
+    /* 首页特有样式 */
     .container {
       position: relative;
       z-index: 1;
@@ -64,7 +16,6 @@
       width: 90%;
     }
 
-    /* 标题 */
     .title {
       font-size: 3.5rem;
       font-weight: bold;
@@ -88,7 +39,6 @@
       letter-spacing: 3px;
     }
 
-    /* 描述 */
     .description {
       color: rgba(255, 255, 255, 0.8);
       font-size: 1rem;
@@ -100,7 +50,6 @@
       border: 1px solid rgba(124, 92, 255, 0.2);
     }
 
-    /* 按钮 */
     .btn {
       display: inline-block;
       padding: 18px 60px;
@@ -120,7 +69,15 @@
       box-shadow: 0 8px 40px rgba(124, 92, 255, 0.6);
     }
 
-    /* 特性列表 */
+    .btn-gold {
+      background: linear-gradient(135deg, #e2b340, #f0d060);
+      box-shadow: 0 4px 30px rgba(226, 179, 64, 0.4);
+    }
+
+    .btn-gold:hover {
+      box-shadow: 0 8px 40px rgba(226, 179, 64, 0.6);
+    }
+
     .features {
       display: flex;
       justify-content: center;
@@ -141,19 +98,28 @@
       font-size: 1.3rem;
     }
 
-    /* 底部 */
     .footer {
       position: fixed;
       bottom: 20px;
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 0.8rem;
+      left: 0;
+      right: 0;
+      text-align: center;
     }
 
-    /* 响应式 */
+    /* 主页 hero 区域 */
+    .hero {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding-top: 60px;
+    }
+
     @media (max-width: 600px) {
       .title { font-size: 2.2rem; }
       .container { padding: 20px; }
-      .btn { padding: 15px 40px; font-size: 1rem; }
+      .btn { padding: 15px 40px; font-size: 1rem; display: block; margin: 10px auto; }
+      .btn-gold { margin-left: auto; }
       .features { gap: 15px; }
     }
   </style>
@@ -162,58 +128,61 @@
   <!-- 星空背景 -->
   <div class="stars" id="stars"></div>
 
+  <!-- 导航栏 -->
+  <div id="app-navbar"></div>
+
   <!-- 主内容 -->
-  <div class="container">
-    <h1 class="title">星尘编年史</h1>
-    <p class="subtitle">— 记忆编织者的旅程 —</p>
+  <div class="hero">
+    <div class="container">
+      <h1 class="title">星尘编年史</h1>
+      <p class="subtitle">— 记忆编织者的旅程 —</p>
 
-    <div class="description">
-      在一个魔法与科技交织的世界，你是一名年轻的"记忆编织者"。<br>
-      穿越不同的记忆碎片，修复被黑暗侵蚀的世界线。<br>
-      每一个选择，都将影响世界的命运...
-    </div>
+      <div class="description">
+        在一个魔法与科技交织的世界，你是一名年轻的"记忆编织者"。<br>
+        穿越不同的记忆碎片，修复被黑暗侵蚀的世界线。<br>
+        每一个选择，都将影响世界的命运...
+      </div>
 
-    <a href="game.html" class="btn">开始旅程</a>
-    <a href="reader.html" class="btn" style="margin-left: 15px; background: linear-gradient(135deg, #e2b340, #f0d060); box-shadow: 0 4px 30px rgba(226, 179, 64, 0.4);">阅读小说</a>
+      <div>
+        <a href="game.html" class="btn">开始旅程</a>
+        <a href="reader.html" class="btn btn-gold" style="margin-left: 15px;">阅读小说</a>
+      </div>
 
-    <div class="features">
-      <div class="feature">
-        <span class="feature-icon">📖</span>
-        <span>沉浸式叙事</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">🔀</span>
-        <span>多分支剧情</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">💾</span>
-        <span>存档系统</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">🏆</span>
-        <span>成就收集</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">📚</span>
-        <span>在线阅读</span>
+      <div class="features">
+        <div class="feature">
+          <span class="feature-icon">📖</span>
+          <span>沉浸式叙事</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">🔀</span>
+          <span>多分支剧情</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">💾</span>
+          <span>存档系统</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">🏆</span>
+          <span>成就收集</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">📚</span>
+          <span>在线阅读</span>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="footer">星尘编年史 © 2026</div>
 
+  <!-- Scripts -->
+  <script src="js/common.js"></script>
   <script>
     // 创建星空背景
-    const starsContainer = document.getElementById('stars');
-    for (let i = 0; i < 100; i++) {
-      const star = document.createElement('div');
-      star.className = 'star';
-      star.style.left = Math.random() * 100 + '%';
-      star.style.top = Math.random() * 100 + '%';
-      star.style.animationDelay = Math.random() * 3 + 's';
-      star.style.animationDuration = (2 + Math.random() * 3) + 's';
-      starsContainer.appendChild(star);
-    }
+    createStars('stars');
+
+    // 渲染导航栏
+    renderNavbar('index');
   </script>
 </body>
 </html>
